@@ -5,6 +5,9 @@ import { readFile } from 'node:fs/promises';
 import { fetchRoutes } from './osrm-api';
 import type { RouteElementsResponse, RouteResponse } from './osrm-schema';
 import { getProcessedRouteFromElements, getRouteElements } from './utils';
+import { fetchAccidents } from './accidents/fetchAccidents';
+import { Accident } from './accidents/types';
+import { accidentsQuerySchema } from './accidents/querySchema';
 import { Coords, RouteSegment } from './types';
 
 /**
@@ -78,6 +81,28 @@ app.get('/route', async (c) => {
       dangerousIntersectionsCoordinates,
     });
   }
+
+  return c.json(result);
+});
+
+app.get('/accidents', async (c) => {
+  const { coords, maxDistance } = accidentsQuerySchema.parse({
+    coords: c.req.query('coords'),
+    maxDistance: c.req.query('maxDistance')
+      ? Number(c.req.query('maxDistance'))
+      : 200,
+  });
+
+  const parsedCoords = coords.split(';').map((pair) => {
+    const [lng, lat] = pair.split(',').map(Number); // Dzielimy każdą parę współrzędnych i konwertujemy je na liczby
+    return [lng, lat] as [number, number];
+  });
+  let result: Accident[];
+
+  result = await fetchAccidents({
+    points: parsedCoords,
+    maxDistance: maxDistance,
+  });
 
   return c.json(result);
 });

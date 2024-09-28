@@ -1,5 +1,5 @@
 import { DANGEROUS_TYPES_OF_ROAD, DANGEROUS_VELOCITY } from './config';
-import { NodeProps, RouteElementsResponse, Tags } from './osrm-schema';
+import { NodeProps, RouteElementsResponse, Tags, Nodes } from './osrm-schema';
 import { Coords, RouteSegment } from './types';
 
 export { getRouteElements, getProcessedRouteFromElements };
@@ -15,6 +15,25 @@ async function getRouteElements(
   const elements: RouteElementsResponse = await response.json();
 
   return elements.elements;
+}
+
+export async function getDetailsForNodeIds(
+  nodeIds: number[],
+): Promise<NodeProps[]> {
+  const url = new URL('https://overpass-api.de/api/interpreter');
+
+  const nodeIdsString = nodeIds.join(',');
+
+  url.searchParams.set(
+    'data',
+    `\
+[out:json][timeout:25];
+node(id:${nodeIdsString});
+out body;
+`,
+  );
+
+  return Nodes.parse((await fetch(url).then((r) => r.json())).elements);
 }
 
 function getProcessedRouteFromElements(

@@ -108,15 +108,17 @@ const Road = z.object({
   id: z.number(),
 });
 
-export type NodeProps = z.infer<typeof Node>;
-export const Node = z.object({
+export type NodeProps = z.infer<typeof NodeProps>;
+export const NodeProps = z.object({
   type: z.literal('node'),
   id: z.number(),
   lat: z.number(),
   lon: z.number(),
 });
 
-const Element = z.union([Road, Node]);
+export const Nodes = z.array(NodeProps);
+
+const Element = z.union([Road, NodeProps]);
 
 const StepManeuver = z.object({
   /** A [longitude, latitude] pair describing the location of the turn. */
