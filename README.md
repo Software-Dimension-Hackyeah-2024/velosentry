@@ -1,6 +1,6 @@
 ## Pre-requisites
 
-- Install pnpm `https://pnpm.io` for faster dependency management.
+- Install [pnpm](https://pnpm.io) for faster dependency management.
 
 ## Development
 
