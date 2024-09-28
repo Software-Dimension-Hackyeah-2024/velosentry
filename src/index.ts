@@ -77,8 +77,10 @@ app.get('/', async (c) => {
     }
 
     // other factors
-    const elements = await getRouteElements(route.legs[0].annotation.nodes);
-    getProcessedRouteFromElements(elements);
+    const nodeIds = route.legs[0].annotation.nodes;
+    const elements = await getRouteElements(nodeIds);
+
+    getProcessedRouteFromElements(elements, nodeIds);
 
     // final calculation
 
