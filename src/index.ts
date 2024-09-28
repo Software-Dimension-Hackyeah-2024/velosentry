@@ -41,12 +41,12 @@ app.get('/', async (c) => {
   const result: ResultType = [];
 
   if (MOCK_OSRM_API) {
-    data = JSON.parse(await readFile('./osrm-response-01.json', 'utf-8'));
+    data = JSON.parse(await readFile('./osrm-response-02.json', 'utf-8'));
   } else {
     data = await fetchRoutes({
       points: [
-        [19.753417968750004, 50.17689812200107],
-        [20.843811035156254, 50.88917404890332],
+        [19.937096,50.061657],
+        [19.921474,50.045345],
       ],
     });
   }
