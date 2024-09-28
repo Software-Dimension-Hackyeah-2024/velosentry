@@ -5,11 +5,7 @@ import { readFile } from 'node:fs/promises';
 import { fetchRoutes } from './osrm-api';
 import type { RouteElementsResponse, RouteResponse } from './osrm-schema';
 import { getProcessedRouteFromElements, getRouteElements } from './utils';
-import { Coords } from './types';
-
-const checkIfIsDangerousIntersection = (intersection: any): boolean => {
-  return !!intersection;
-};
+import { Coords, RouteSegment } from './types';
 
 /**
  * Using a cached API response saved to a file, instead of hitting the real API.
@@ -35,7 +31,7 @@ interface RouteResult {
   route: RouteResponse['routes'][0];
   safety: number;
   coordinates: Coords[];
-  elements: RouteElementsResponse['elements'];
+  processedRoute: RouteSegment[];
   dangerousIntersectionsCoordinates: Coords[];
 }
 
@@ -47,7 +43,7 @@ app.get('/', async (c) => {
 
 app.get('/route', async (c) => {
   let data: RouteResponse;
-  let result: RouteResult;
+  let result: ResultType = [];
 
   if (MOCK_OSRM_API) {
     data = JSON.parse(await readFile('./osrm-response-02.json', 'utf-8'));
@@ -62,28 +58,26 @@ app.get('/route', async (c) => {
 
   const { routes } = data;
   for (const route of routes) {
+    const nodeIds = route.legs[0].annotation.nodes;
+    const elements = await getRouteElements(nodeIds);
+
+    const { processedRoute, dangerousIntersectionsCoordinates } =
+      getProcessedRouteFromElements(elements, nodeIds);
+
+    const coordinates = processedRoute.reduce(
+      (acc, curr) => [...acc, curr.endGeo],
+      [processedRoute[0].startGeo],
+    );
+
+    const routeSafety = 7;
+    result.push({
+      route,
+      safety: routeSafety,
+      coordinates,
+      processedRoute,
+      dangerousIntersectionsCoordinates,
+    });
   }
-
-  const route = routes[0];
-  const nodeIds = route.legs[0].annotation.nodes;
-  const elements = await getRouteElements(nodeIds);
-
-  const { processedRoute, dangerousIntersectionsCoordinates } =
-    getProcessedRouteFromElements(elements, nodeIds);
-
-  const coordinates = processedRoute.reduce(
-    (acc, curr) => [...acc, curr.endGeo],
-    [processedRoute[0].startGeo],
-  );
-
-  const routeSafety = 7;
-  result = {
-    route,
-    safety: routeSafety,
-    coordinates,
-    elements,
-    dangerousIntersectionsCoordinates,
-  };
 
   return c.json(result);
 });
