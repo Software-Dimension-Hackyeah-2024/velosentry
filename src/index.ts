@@ -5,6 +5,10 @@ import { readFile } from 'node:fs/promises';
 import { fetchRoutes } from './osrm-api';
 import type { RouteResponse } from './osrm-schema';
 
+const checkIfIsDangerousIntersection = (intersection: any): boolean => {
+  return !!intersection;
+};
+
 /**
  * Using a cached API response saved to a file, instead of hitting the real API.
  */
@@ -25,18 +29,47 @@ app.use(
   }),
 );
 
+interface RouteResult {
+  route: RouteResponse['routes'][0];
+  safety: number;
+}
+
+type ResultType = RouteResult[];
+
 app.get('/', async (c) => {
-  let result: RouteResponse;
+  let data: RouteResponse;
+  const result: ResultType = [];
 
   if (MOCK_OSRM_API) {
-    result = JSON.parse(await readFile('./osrm-response-02.json', 'utf-8'));
+    data = JSON.parse(await readFile('./osrm-response-02.json', 'utf-8'));
   } else {
-    result = await fetchRoutes({
+    data = await fetchRoutes({
       points: [
         [19.937096,50.061657],
         [19.921474,50.045345],
       ],
     });
+  }
+
+  const { routes } = data;
+  for (let route of routes) {
+    // dangerous intersections
+    let dangerousIntersectionsCounter = 0;
+    for (let leg of route.legs) {
+      for (let step of leg.steps) {
+        // check intersections
+        for (let intersection of step.intersections) {
+          if (checkIfIsDangerousIntersection(intersection))
+            dangerousIntersectionsCounter++;
+        }
+      }
+    }
+
+    // other factors
+
+    // final calculation
+    const routeSafety = 7;
+    result.push({ route, safety: routeSafety });
   }
 
   return c.json(result);
