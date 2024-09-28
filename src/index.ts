@@ -4,6 +4,9 @@ import { serve } from '@hono/node-server';
 import { readFile } from 'node:fs/promises';
 import { fetchRoutes } from './osrm-api';
 import type { RouteResponse } from './osrm-schema';
+import { fetchAccidents } from './accidents/fetchAccidents';
+import { Accident } from './accidents/types';
+import { accidentsQuerySchema } from './accidents/querySchema';
 
 /**
  * Using a cached API response saved to a file, instead of hitting the real API.
@@ -38,6 +41,27 @@ app.get('/', async (c) => {
       ],
     });
   }
+
+  return c.json(result);
+});
+
+app.get("/accidents",async (c) => {
+
+  const { coords, maxDistance } = accidentsQuerySchema.parse({
+    coords: c.req.query("coords"),
+    maxDistance: c.req.query("maxDistance") ? Number(c.req.query("maxDistance")) : 200,
+  });
+
+  const parsedCoords = coords.split(';').map(pair => {
+    const [lng, lat] = pair.split(',').map(Number); // Dzielimy każdą parę współrzędnych i konwertujemy je na liczby
+    return [lng, lat] as [number, number];
+  });
+  let result: Accident[];
+
+    result = await fetchAccidents({
+      points: parsedCoords,
+      maxDistance:maxDistance,
+    });
 
   return c.json(result);
 });
