@@ -5,7 +5,6 @@ import { readFile } from 'node:fs/promises';
 import { fetchRoutes } from './osrm-api';
 import type { RouteElementsResponse, RouteResponse } from './osrm-schema';
 import { getProcessedRouteFromElements, getRouteElements } from './utils';
-import type { RouteResponse } from './osrm-schema';
 import { fetchAccidents } from './accidents/fetchAccidents';
 import { Accident } from './accidents/types';
 import { accidentsQuerySchema } from './accidents/querySchema';
