@@ -6,6 +6,7 @@
 	"dependencies": {
 		"@hono/node-server": "^1.13.1",
 		"hono": "^4.6.3",
+		"openmeteo": "^1.1.4",
 		"zod": "^3.23.8"
 	},
 	"devDependencies": {

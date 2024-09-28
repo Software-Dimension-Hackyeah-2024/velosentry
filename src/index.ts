@@ -4,6 +4,7 @@ import { serve } from '@hono/node-server';
 import { readFile } from 'node:fs/promises';
 import { fetchRoutes } from './osrm-api';
 import type { RouteResponse } from './osrm-schema';
+import { weather } from './weather';
 
 const checkIfIsDangerousIntersection = (intersection: any): boolean => {
   return !!intersection;
@@ -40,14 +41,14 @@ type ResultType = RouteResult[];
 app.get('/', async (c) => {
   let data: RouteResponse;
   const result: ResultType = [];
-  
+
   if (MOCK_OSRM_API) {
     data = JSON.parse(await readFile('./osrm-response-02.json', 'utf-8'));
   } else {
     data = await fetchRoutes({
       points: [
-        [19.937096,50.061657],
-        [19.921474,50.045345],
+        [19.937096, 50.061657],
+        [19.921474, 50.045345],
       ],
     });
   }
@@ -84,6 +85,8 @@ app.get('/', async (c) => {
 
   return c.json(result);
 });
+
+app.route('/weather', weather);
 
 const port = 3000;
 console.log(`Server is running on port ${port}`);
