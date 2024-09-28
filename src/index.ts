@@ -4,7 +4,7 @@ import { serve } from '@hono/node-server';
 import { readFile } from 'node:fs/promises';
 import { fetchRoutes } from './osrm-api';
 import type { RouteElementsResponse, RouteResponse } from './osrm-schema';
-import { getRouteElements } from './utils';
+import { getProcessedRouteFromElements, getRouteElements } from './utils';
 
 const checkIfIsDangerousIntersection = (intersection: any): boolean => {
   return !!intersection;
@@ -34,7 +34,7 @@ interface RouteResult {
   route: RouteResponse['routes'][0];
   safety: number;
   coordinates: { latitude: number; longitude: number }[];
-  elements: RouteElementsResponse;
+  elements: RouteElementsResponse['elements'];
 }
 
 type ResultType = RouteResult[];
@@ -78,6 +78,7 @@ app.get('/', async (c) => {
 
     // other factors
     const elements = await getRouteElements(route.legs[0].annotation.nodes);
+    getProcessedRouteFromElements(elements);
 
     // final calculation
 

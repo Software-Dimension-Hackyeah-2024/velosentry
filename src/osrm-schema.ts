@@ -102,6 +102,7 @@ const Road = z.object({
     lit: RoadLight.optional(),
   }),
   nodes: z.array(z.number()),
+  id: z.number(),
 });
 
 const Node = z.object({
