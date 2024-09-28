@@ -32,6 +32,7 @@ app.use(
 interface RouteResult {
   route: RouteResponse['routes'][0];
   safety: number;
+  coordinates: { latitude: number; longitude: number }[];
 }
 
 type ResultType = RouteResult[];
@@ -39,7 +40,7 @@ type ResultType = RouteResult[];
 app.get('/', async (c) => {
   let data: RouteResponse;
   const result: ResultType = [];
-
+  
   if (MOCK_OSRM_API) {
     data = JSON.parse(await readFile('./osrm-response-02.json', 'utf-8'));
   } else {
@@ -55,8 +56,16 @@ app.get('/', async (c) => {
   for (let route of routes) {
     // dangerous intersections
     let dangerousIntersectionsCounter = 0;
+    const coordinates = [];
     for (let leg of route.legs) {
       for (let step of leg.steps) {
+        // add coords
+        for (let coords of step.geometry.coordinates)
+          coordinates.push({
+            longitude: coords[0],
+            latitude: coords[1],
+          });
+
         // check intersections
         for (let intersection of step.intersections) {
           if (checkIfIsDangerousIntersection(intersection))
@@ -68,8 +77,9 @@ app.get('/', async (c) => {
     // other factors
 
     // final calculation
+
     const routeSafety = 7;
-    result.push({ route, safety: routeSafety });
+    result.push({ route, safety: routeSafety, coordinates });
   }
 
   return c.json(result);
