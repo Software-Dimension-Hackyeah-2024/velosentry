@@ -12,7 +12,7 @@ export async function fetchRoutes(options: FetchRouteOptions) {
   const coordinatesStr = points.map(([lon, lat]) => `${lon},${lat}`).join(';');
 
   const result = await fetch(
-    `${ROUTE_API}/v1/bike/${coordinatesStr}?overview=false&geometries=geojson&steps=true&alternatives=true`,
+    `${ROUTE_API}/v1/bike/${coordinatesStr}?overview=false&alternatives=true&steps=true&geometries=geojson&annotations=true`,
   ).then((r) => r.json());
 
   return RouteResponse.parse(result);

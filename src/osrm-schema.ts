@@ -37,6 +37,86 @@ const Modifier = z.enum([
   'sharp left', // a sharp turn to the left
 ]);
 
+// See https://wiki.openstreetmap.org/wiki/Key:highway for more details
+const RoadType = z.enum([
+  'motorway',
+  'trunk',
+  'primary',
+  'secondary',
+  'tertiary',
+  'unclassified',
+  'residential',
+  'motorway_link',
+  'trunk_link',
+  'primary_link',
+  'secondary_link',
+  'tertiary_link',
+  'living_street',
+  'service',
+  'pedestrian',
+  'track',
+  'bus_guideway',
+  'escape',
+  'raceway',
+  'road',
+  'busway',
+  'footway',
+  'bridleway',
+  'steps',
+  'corridor',
+  'path',
+  'via_ferrata',
+  'cycleway',
+  'proposed',
+  'construction',
+]);
+
+// See https://wiki.openstreetmap.org/wiki/Key:surface for more details
+const RoadSurface = z.enum([
+  'paved',
+  'asphalt',
+  'chipseal',
+  'concrete',
+  'paving_stones',
+  'grass_paver',
+  'sett',
+  'unhewn_cobblestone',
+  'cobblestone',
+]);
+
+const RoadLight = z.enum([
+  'yes',
+  'no',
+  '24/7',
+  'disused',
+  'automatic',
+  'limited',
+]);
+
+const Road = z.object({
+  type: z.literal('way'),
+  tags: z.object({
+    highway: RoadType,
+    maxspeed: z.number().optional(),
+    surface: RoadSurface.optional(),
+    lit: RoadLight.optional(),
+  }),
+  nodes: z.array(z.number()),
+  id: z.number(),
+});
+
+export type Node = z.infer<typeof Node>;
+export const Node = z.object({
+  type: z.literal('node'),
+  id: z.number(),
+  lat: z.number(),
+  lon: z.number(),
+});
+
+export const Nodes = z.array(Node);
+
+const Element = z.union([Road, Node]);
+
 const StepManeuver = z.object({
   /** A [longitude, latitude] pair describing the location of the turn. */
   location: z.tuple([z.number(), z.number()]),
@@ -182,12 +262,12 @@ export const RouteLeg = z.object({
    */
   steps: z.array(RouteStep),
 
-  // /**
-  //  * Additional details about each coordinate along the route geometry:
-  //  *
-  //  * (unused)
-  //  */
-  // annotation:
+  /**
+   * Additional details about each coordinate along the route geometry:
+   */
+  annotation: z.object({
+    nodes: z.array(z.number()),
+  }),
 });
 
 const Route = z.object({
@@ -214,4 +294,9 @@ export type RouteResponse = z.infer<typeof RouteResponse>;
 export const RouteResponse = z.object({
   code: z.literal('Ok'),
   routes: z.array(Route),
+});
+
+export type RouteElementsResponse = z.infer<typeof RouteElementsResponse>;
+export const RouteElementsResponse = z.object({
+  elements: z.array(Element),
 });

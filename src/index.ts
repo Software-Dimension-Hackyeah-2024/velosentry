@@ -3,10 +3,16 @@ import { cors } from 'hono/cors';
 import { serve } from '@hono/node-server';
 import { readFile } from 'node:fs/promises';
 import { fetchRoutes } from './osrm-api';
+import type { RouteElementsResponse, RouteResponse } from './osrm-schema';
+import { getProcessedRouteFromElements, getRouteElements } from './utils';
 import type { RouteResponse } from './osrm-schema';
 import { fetchAccidents } from './accidents/fetchAccidents';
 import { Accident } from './accidents/types';
 import { accidentsQuerySchema } from './accidents/querySchema';
+
+const checkIfIsDangerousIntersection = (intersection: any): boolean => {
+  return !!intersection;
+};
 
 /**
  * Using a cached API response saved to a file, instead of hitting the real API.
@@ -28,18 +34,60 @@ app.use(
   }),
 );
 
+interface RouteResult {
+  route: RouteResponse['routes'][0];
+  safety: number;
+  coordinates: { latitude: number; longitude: number }[];
+  elements: RouteElementsResponse['elements'];
+}
+
+type ResultType = RouteResult[];
+
 app.get('/', async (c) => {
-  let result: RouteResponse;
+  let data: RouteResponse;
+  const result: ResultType = [];
 
   if (MOCK_OSRM_API) {
-    result = JSON.parse(await readFile('./osrm-response-01.json', 'utf-8'));
+    data = JSON.parse(await readFile('./osrm-response-02.json', 'utf-8'));
   } else {
-    result = await fetchRoutes({
+    data = await fetchRoutes({
       points: [
-        [19.753417968750004, 50.17689812200107],
-        [20.843811035156254, 50.88917404890332],
+        [19.937096, 50.061657],
+        [19.921474, 50.045345],
       ],
     });
+  }
+
+  const { routes } = data;
+  for (const route of routes) {
+    // dangerous intersections
+    let dangerousIntersectionsCounter = 0;
+    const coordinates = [];
+    for (const leg of route.legs) {
+      for (const step of leg.steps) {
+        // add coords
+        for (const coords of step.geometry.coordinates)
+          coordinates.push({
+            longitude: coords[0],
+            latitude: coords[1],
+          });
+
+        // check intersections
+        for (const intersection of step.intersections) {
+          if (checkIfIsDangerousIntersection(intersection))
+            dangerousIntersectionsCounter++;
+        }
+      }
+    }
+
+    // other factors
+    const elements = await getRouteElements(route.legs[0].annotation.nodes);
+    getProcessedRouteFromElements(elements);
+
+    // final calculation
+
+    const routeSafety = 7;
+    result.push({ route, safety: routeSafety, coordinates, elements });
   }
 
   return c.json(result);
