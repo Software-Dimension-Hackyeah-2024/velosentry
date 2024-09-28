@@ -93,9 +93,9 @@ const RoadLight = z.enum([
   'limited',
 ]);
 
-export type Tag = z.infer<typeof Tag>;
-export const Tag = z.object({
-  highway: RoadType,
+export type Tags = z.infer<typeof Tags>;
+export const Tags = z.object({
+  highway: RoadType.optional(),
   maxspeed: z.number().optional(),
   surface: RoadSurface.optional(),
   lit: RoadLight.optional(),
@@ -103,7 +103,7 @@ export const Tag = z.object({
 
 const Road = z.object({
   type: z.literal('way'),
-  tags: z.array(Tag),
+  tags: Tags.optional(),
   nodes: z.array(z.number()),
   id: z.number(),
 });

@@ -4,11 +4,8 @@ import { serve } from '@hono/node-server';
 import { readFile } from 'node:fs/promises';
 import { fetchRoutes } from './osrm-api';
 import type { RouteElementsResponse, RouteResponse } from './osrm-schema';
-import {
-  Coords,
-  getProcessedRouteFromElements,
-  getRouteElements,
-} from './utils';
+import { getProcessedRouteFromElements, getRouteElements } from './utils';
+import { Coords } from './types';
 
 const checkIfIsDangerousIntersection = (intersection: any): boolean => {
   return !!intersection;
@@ -39,15 +36,16 @@ interface RouteResult {
   safety: number;
   coordinates: Coords[];
   elements: RouteElementsResponse['elements'];
+  dangerousIntersectionsCoordinates: Coords[];
 }
 
 type ResultType = RouteResult[];
 
 app.get('/', async (c) => {
-  return c.json({ message: 'Hello, World!' });
+  return c.json({ message: 'Hello, cyclist!' });
 });
 
-app.get('/find-routes', async (c) => {
+app.get('/route', async (c) => {
   let data: RouteResponse;
   let result: RouteResult;
 
@@ -63,11 +61,15 @@ app.get('/find-routes', async (c) => {
   }
 
   const { routes } = data;
+  for (const route of routes) {
+  }
+
   const route = routes[0];
   const nodeIds = route.legs[0].annotation.nodes;
   const elements = await getRouteElements(nodeIds);
 
-  const processedRoute = getProcessedRouteFromElements(elements, nodeIds);
+  const { processedRoute, dangerousIntersectionsCoordinates } =
+    getProcessedRouteFromElements(elements, nodeIds);
 
   const coordinates = processedRoute.reduce(
     (acc, curr) => [...acc, curr.endGeo],
@@ -75,7 +77,13 @@ app.get('/find-routes', async (c) => {
   );
 
   const routeSafety = 7;
-  result = { route, safety: routeSafety, coordinates, elements };
+  result = {
+    route,
+    safety: routeSafety,
+    coordinates,
+    elements,
+    dangerousIntersectionsCoordinates,
+  };
 
   return c.json(result);
 });
