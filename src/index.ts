@@ -3,7 +3,8 @@ import { cors } from 'hono/cors';
 import { serve } from '@hono/node-server';
 import { readFile } from 'node:fs/promises';
 import { fetchRoutes } from './osrm-api';
-import type { RouteResponse } from './osrm-schema';
+import type { RouteElementsResponse, RouteResponse } from './osrm-schema';
+import { getRouteElements } from './utils';
 
 const checkIfIsDangerousIntersection = (intersection: any): boolean => {
   return !!intersection;
@@ -33,6 +34,7 @@ interface RouteResult {
   route: RouteResponse['routes'][0];
   safety: number;
   coordinates: { latitude: number; longitude: number }[];
+  elements: RouteElementsResponse;
 }
 
 type ResultType = RouteResult[];
@@ -40,14 +42,14 @@ type ResultType = RouteResult[];
 app.get('/', async (c) => {
   let data: RouteResponse;
   const result: ResultType = [];
-  
+
   if (MOCK_OSRM_API) {
     data = JSON.parse(await readFile('./osrm-response-02.json', 'utf-8'));
   } else {
     data = await fetchRoutes({
       points: [
-        [19.937096,50.061657],
-        [19.921474,50.045345],
+        [19.937096, 50.061657],
+        [19.921474, 50.045345],
       ],
     });
   }
@@ -75,11 +77,12 @@ app.get('/', async (c) => {
     }
 
     // other factors
+    const elements = await getRouteElements(route.legs[0].annotation.nodes);
 
     // final calculation
 
     const routeSafety = 7;
-    result.push({ route, safety: routeSafety, coordinates });
+    result.push({ route, safety: routeSafety, coordinates, elements });
   }
 
   return c.json(result);
