@@ -1,6 +1,7 @@
 import { NodeProps, RouteElementsResponse, Tag } from './osrm-schema';
 
 export { getRouteElements, getProcessedRouteFromElements };
+export type { RouteSegment, Coords };
 
 async function getRouteElements(
   nodeIds: number[],
@@ -40,12 +41,12 @@ function getProcessedRouteFromElements(
       ) {
         processedRoute.push({
           startGeo: {
-            lat: nodesMap.get(nodeIds[i])?.lat ?? 0,
-            lon: nodesMap.get(nodeIds[i])?.lon ?? 0,
+            latitude: nodesMap.get(nodeIds[i])?.lat ?? 0,
+            longitude: nodesMap.get(nodeIds[i])?.lon ?? 0,
           },
           endGeo: {
-            lat: nodesMap.get(nodeIds[i + 1])?.lat ?? 0,
-            lon: nodesMap.get(nodeIds[i + 1])?.lon ?? 0,
+            latitude: nodesMap.get(nodeIds[i + 1])?.lat ?? 0,
+            longitude: nodesMap.get(nodeIds[i + 1])?.lon ?? 0,
           },
           tags: way.tags,
         });
@@ -58,13 +59,12 @@ function getProcessedRouteFromElements(
 }
 
 type RouteSegment = {
-  startGeo: {
-    lat: number;
-    lon: number;
-  };
-  endGeo: {
-    lat: number;
-    lon: number;
-  };
+  startGeo: Coords;
+  endGeo: Coords;
   tags: Tag[];
+};
+
+type Coords = {
+  latitude: number;
+  longitude: number;
 };

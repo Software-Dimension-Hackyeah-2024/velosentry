@@ -4,7 +4,11 @@ import { serve } from '@hono/node-server';
 import { readFile } from 'node:fs/promises';
 import { fetchRoutes } from './osrm-api';
 import type { RouteElementsResponse, RouteResponse } from './osrm-schema';
-import { getProcessedRouteFromElements, getRouteElements } from './utils';
+import {
+  Coords,
+  getProcessedRouteFromElements,
+  getRouteElements,
+} from './utils';
 
 const checkIfIsDangerousIntersection = (intersection: any): boolean => {
   return !!intersection;
@@ -33,15 +37,19 @@ app.use(
 interface RouteResult {
   route: RouteResponse['routes'][0];
   safety: number;
-  coordinates: { latitude: number; longitude: number }[];
+  coordinates: Coords[];
   elements: RouteElementsResponse['elements'];
 }
 
 type ResultType = RouteResult[];
 
 app.get('/', async (c) => {
+  return c.json({ message: 'Hello, World!' });
+});
+
+app.get('/find-routes', async (c) => {
   let data: RouteResponse;
-  const result: ResultType = [];
+  let result: RouteResult;
 
   if (MOCK_OSRM_API) {
     data = JSON.parse(await readFile('./osrm-response-02.json', 'utf-8'));
@@ -55,38 +63,19 @@ app.get('/', async (c) => {
   }
 
   const { routes } = data;
-  for (let route of routes) {
-    // dangerous intersections
-    let dangerousIntersectionsCounter = 0;
-    const coordinates = [];
-    for (let leg of route.legs) {
-      for (let step of leg.steps) {
-        // add coords
-        for (let coords of step.geometry.coordinates)
-          coordinates.push({
-            longitude: coords[0],
-            latitude: coords[1],
-          });
+  const route = routes[0];
+  const nodeIds = route.legs[0].annotation.nodes;
+  const elements = await getRouteElements(nodeIds);
 
-        // check intersections
-        for (let intersection of step.intersections) {
-          if (checkIfIsDangerousIntersection(intersection))
-            dangerousIntersectionsCounter++;
-        }
-      }
-    }
+  const processedRoute = getProcessedRouteFromElements(elements, nodeIds);
 
-    // other factors
-    const nodeIds = route.legs[0].annotation.nodes;
-    const elements = await getRouteElements(nodeIds);
+  const coordinates = processedRoute.reduce(
+    (acc, curr) => [...acc, curr.endGeo],
+    [processedRoute[0].startGeo],
+  );
 
-    getProcessedRouteFromElements(elements, nodeIds);
-
-    // final calculation
-
-    const routeSafety = 7;
-    result.push({ route, safety: routeSafety, coordinates, elements });
-  }
+  const routeSafety = 7;
+  result = { route, safety: routeSafety, coordinates, elements };
 
   return c.json(result);
 });
