@@ -105,12 +105,15 @@ const Road = z.object({
   id: z.number(),
 });
 
-const Node = z.object({
+export type Node = z.infer<typeof Node>;
+export const Node = z.object({
   type: z.literal('node'),
   id: z.number(),
   lat: z.number(),
   lon: z.number(),
 });
+
+export const Nodes = z.array(Node);
 
 const Element = z.union([Road, Node]);
 

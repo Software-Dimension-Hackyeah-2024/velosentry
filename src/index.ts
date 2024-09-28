@@ -55,21 +55,21 @@ app.get('/', async (c) => {
   }
 
   const { routes } = data;
-  for (let route of routes) {
+  for (const route of routes) {
     // dangerous intersections
     let dangerousIntersectionsCounter = 0;
     const coordinates = [];
-    for (let leg of route.legs) {
-      for (let step of leg.steps) {
+    for (const leg of route.legs) {
+      for (const step of leg.steps) {
         // add coords
-        for (let coords of step.geometry.coordinates)
+        for (const coords of step.geometry.coordinates)
           coordinates.push({
             longitude: coords[0],
             latitude: coords[1],
           });
 
         // check intersections
-        for (let intersection of step.intersections) {
+        for (const intersection of step.intersections) {
           if (checkIfIsDangerousIntersection(intersection))
             dangerousIntersectionsCounter++;
         }
