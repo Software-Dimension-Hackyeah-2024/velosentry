@@ -8,10 +8,7 @@ import { getProcessedRouteFromElements, getRouteElements } from './utils';
 import { fetchAccidents } from './accidents/fetchAccidents';
 import { Accident } from './accidents/types';
 import { accidentsQuerySchema } from './accidents/querySchema';
-
-const checkIfIsDangerousIntersection = (intersection: any): boolean => {
-  return !!intersection;
-};
+import { Coords, RouteSegment } from './types';
 
 /**
  * Using a cached API response saved to a file, instead of hitting the real API.
@@ -36,15 +33,20 @@ app.use(
 interface RouteResult {
   route: RouteResponse['routes'][0];
   safety: number;
-  coordinates: { latitude: number; longitude: number }[];
-  elements: RouteElementsResponse['elements'];
+  coordinates: Coords[];
+  processedRoute: RouteSegment[];
+  dangerousIntersectionsCoordinates: Coords[];
 }
 
 type ResultType = RouteResult[];
 
 app.get('/', async (c) => {
+  return c.json({ message: 'Hello, cyclist!' });
+});
+
+app.get('/route', async (c) => {
   let data: RouteResponse;
-  const result: ResultType = [];
+  let result: ResultType = [];
 
   if (MOCK_OSRM_API) {
     data = JSON.parse(await readFile('./osrm-response-02.json', 'utf-8'));
@@ -59,56 +61,48 @@ app.get('/', async (c) => {
 
   const { routes } = data;
   for (const route of routes) {
-    // dangerous intersections
-    let dangerousIntersectionsCounter = 0;
-    const coordinates = [];
-    for (const leg of route.legs) {
-      for (const step of leg.steps) {
-        // add coords
-        for (const coords of step.geometry.coordinates)
-          coordinates.push({
-            longitude: coords[0],
-            latitude: coords[1],
-          });
+    const nodeIds = route.legs[0].annotation.nodes;
+    const elements = await getRouteElements(nodeIds);
 
-        // check intersections
-        for (const intersection of step.intersections) {
-          if (checkIfIsDangerousIntersection(intersection))
-            dangerousIntersectionsCounter++;
-        }
-      }
-    }
+    const { processedRoute, dangerousIntersectionsCoordinates } =
+      getProcessedRouteFromElements(elements, nodeIds);
 
-    // other factors
-    const elements = await getRouteElements(route.legs[0].annotation.nodes);
-    getProcessedRouteFromElements(elements);
-
-    // final calculation
+    const coordinates = processedRoute.reduce(
+      (acc, curr) => [...acc, curr.endGeo],
+      [processedRoute[0].startGeo],
+    );
 
     const routeSafety = 7;
-    result.push({ route, safety: routeSafety, coordinates, elements });
+    result.push({
+      route,
+      safety: routeSafety,
+      coordinates,
+      processedRoute,
+      dangerousIntersectionsCoordinates,
+    });
   }
 
   return c.json(result);
 });
 
-app.get("/accidents",async (c) => {
-
+app.get('/accidents', async (c) => {
   const { coords, maxDistance } = accidentsQuerySchema.parse({
-    coords: c.req.query("coords"),
-    maxDistance: c.req.query("maxDistance") ? Number(c.req.query("maxDistance")) : 200,
+    coords: c.req.query('coords'),
+    maxDistance: c.req.query('maxDistance')
+      ? Number(c.req.query('maxDistance'))
+      : 200,
   });
 
-  const parsedCoords = coords.split(';').map(pair => {
+  const parsedCoords = coords.split(';').map((pair) => {
     const [lng, lat] = pair.split(',').map(Number); // Dzielimy każdą parę współrzędnych i konwertujemy je na liczby
     return [lng, lat] as [number, number];
   });
   let result: Accident[];
 
-    result = await fetchAccidents({
-      points: parsedCoords,
-      maxDistance:maxDistance,
-    });
+  result = await fetchAccidents({
+    points: parsedCoords,
+    maxDistance: maxDistance,
+  });
 
   return c.json(result);
 });

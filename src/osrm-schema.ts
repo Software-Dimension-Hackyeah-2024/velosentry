@@ -93,29 +93,32 @@ const RoadLight = z.enum([
   'limited',
 ]);
 
+export type Tags = z.infer<typeof Tags>;
+export const Tags = z.object({
+  highway: RoadType.optional(),
+  maxspeed: z.number().optional(),
+  surface: RoadSurface.optional(),
+  lit: RoadLight.optional(),
+});
+
 const Road = z.object({
   type: z.literal('way'),
-  tags: z.object({
-    highway: RoadType,
-    maxspeed: z.number().optional(),
-    surface: RoadSurface.optional(),
-    lit: RoadLight.optional(),
-  }),
+  tags: Tags.optional(),
   nodes: z.array(z.number()),
   id: z.number(),
 });
 
-export type Node = z.infer<typeof Node>;
-export const Node = z.object({
+export type NodeProps = z.infer<typeof NodeProps>;
+export const NodeProps = z.object({
   type: z.literal('node'),
   id: z.number(),
   lat: z.number(),
   lon: z.number(),
 });
 
-export const Nodes = z.array(Node);
+export const Nodes = z.array(NodeProps);
 
-const Element = z.union([Road, Node]);
+const Element = z.union([Road, NodeProps]);
 
 const StepManeuver = z.object({
   /** A [longitude, latitude] pair describing the location of the turn. */
