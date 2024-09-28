@@ -1,6 +1,14 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { serve } from '@hono/node-server';
+import { readFile } from 'node:fs/promises';
+import { fetchRoutes } from './osrm-api';
+import type { RouteResponse } from './osrm-schema';
+
+/**
+ * Using a cached API response saved to a file, instead of hitting the real API.
+ */
+const MOCK_OSRM_API = true;
 
 const app = new Hono();
 
@@ -17,8 +25,21 @@ app.use(
   }),
 );
 
-app.get('/', (c) => {
-  return c.json({ message: 'Hello world' });
+app.get('/', async (c) => {
+  let result: RouteResponse;
+
+  if (MOCK_OSRM_API) {
+    result = JSON.parse(await readFile('./osrm-response-01.json', 'utf-8'));
+  } else {
+    result = await fetchRoutes({
+      points: [
+        [19.753417968750004, 50.17689812200107],
+        [20.843811035156254, 50.88917404890332],
+      ],
+    });
+  }
+
+  return c.json(result);
 });
 
 const port = 3000;
