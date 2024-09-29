@@ -1,22 +1,24 @@
-import { Tags } from '../osrm-schema';
+import { RoadSmoothness, Tags } from '../osrm-schema';
 import { GOOD_QUALITY_ROAD_SURFACE, LOW_QUALITY_ROAD_SURFACE } from './config';
 
 export { getStreetSegmentQualityCategory };
-export type { RoadSegmentQuality };
 
-type RoadSegmentQuality = -1 | 0 | 1;
-
-function getStreetSegmentQualityCategory(tags?: Tags): RoadSegmentQuality {
+function getStreetSegmentQualityCategory(tags?: Tags): RoadSmoothness {
   if (!tags) {
-    return 0;
+    return 'unknown';
   }
-  if (tags.highway) {
-    if (LOW_QUALITY_ROAD_SURFACE.includes(tags.surface)) {
-      return -1;
-    }
+
+  if (tags.smoothness) {
+    return tags.smoothness;
+  }
+
+  if (tags.surface) {
     if (GOOD_QUALITY_ROAD_SURFACE.includes(tags.surface)) {
-      return 1;
+      return 'good';
+    }
+    if (LOW_QUALITY_ROAD_SURFACE.includes(tags.surface)) {
+      return 'bad';
     }
   }
-  return 0;
+  return 'unknown';
 }

@@ -7,9 +7,9 @@ import {
 } from './config';
 
 export { checkIfIntersectingWithDangerousRoad, getStreetSegmentSafetyCategory };
-export { RoadSegmentSafety };
+export type { RouteSegmentType };
 
-type RoadSegmentSafety = -1 | 0 | 1;
+type RouteSegmentType = 'Designated' | 'Low speed' | 'High speed' | 'Unknown';
 
 function checkIfIntersectingWithDangerousRoad(
   firstSegment: RouteSegment,
@@ -23,27 +23,27 @@ function checkIfIntersectingWithDangerousRoad(
   );
 
   return (
-    secondSegmentSafetyCategory === -1 &&
+    secondSegmentSafetyCategory === 'High speed' &&
     secondSegmentSafetyCategory < firstSegmentSafetyCategory
   );
 }
 
-function getStreetSegmentSafetyCategory(tags?: Tags): RoadSegmentSafety {
+function getStreetSegmentSafetyCategory(tags?: Tags): RouteSegmentType {
   if (!tags) {
-    return 0;
+    return 'Unknown';
   }
   if (tags.highway) {
     if (DANGEROUS_TYPES_OF_ROAD.includes(tags.highway)) {
-      return -1;
+      return 'High speed';
     }
     if (SAFE_TYPES_OF_ROAD.includes(tags.highway)) {
-      return 1;
+      return 'Designated';
     }
   }
 
   if (tags.maxspeed && tags.maxspeed > DANGEROUS_VELOCITY) {
-    return -1;
+    return 'High speed';
   }
 
-  return 0;
+  return 'Low speed';
 }
