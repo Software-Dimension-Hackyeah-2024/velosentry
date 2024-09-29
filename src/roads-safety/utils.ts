@@ -1,12 +1,17 @@
+import { distance } from '@turf/turf';
 import { Tags } from '../osrm-schema';
-import { RouteSegment } from '../types';
+import { Coords, RouteSegment } from '../types';
 import {
   DANGEROUS_TYPES_OF_ROAD,
   DANGEROUS_VELOCITY,
   SAFE_TYPES_OF_ROAD,
 } from './config';
 
-export { checkIfIntersectingWithDangerousRoad, getStreetSegmentSafetyCategory };
+export {
+  checkIfIntersectingWithDangerousRoad,
+  getStreetSegmentSafetyCategory,
+  calculateOverallRouteSafety,
+};
 export type { RouteSegmentType };
 
 type RouteSegmentType = 'Designated' | 'Low speed' | 'High speed' | 'Unknown';
@@ -46,4 +51,38 @@ function getStreetSegmentSafetyCategory(tags?: Tags): RouteSegmentType {
   }
 
   return 'Low speed';
+}
+
+function calculateOverallRouteSafety(
+  dangerousIntersections: Coords[],
+  route: RouteSegment[],
+  distance: number,
+): number {
+  const weightedScores = route.map(
+    (segment) => mapRouteTypeToScore(segment.safety) * segment.weight,
+  );
+
+  const dangerousIntersectionsPenalty = Math.floor(
+    (dangerousIntersections.length / distance) * 1000 * 5,
+  );
+
+  console.log(dangerousIntersectionsPenalty);
+
+  return (
+    weightedScores.reduce((acc, curr) => acc + curr, 0) -
+    dangerousIntersectionsPenalty
+  );
+}
+
+function mapRouteTypeToScore(routeType: RouteSegmentType): number {
+  switch (routeType) {
+    case 'Designated':
+      return 1;
+    case 'Unknown':
+      return 0.5;
+    case 'Low speed':
+      return 0.3;
+    case 'High speed':
+      return 0;
+  }
 }

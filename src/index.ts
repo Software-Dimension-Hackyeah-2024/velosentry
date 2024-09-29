@@ -3,16 +3,13 @@ import { cors } from 'hono/cors';
 import { serve } from '@hono/node-server';
 import { readFile } from 'node:fs/promises';
 import { fetchRoutes } from './osrm-api';
-import type { RouteElementsResponse, RouteResponse } from './osrm-schema';
-import {
-  calculateOverallRouteSafety,
-  getProcessedRouteFromElements,
-  getRouteElements,
-} from './utils';
+import type { RouteResponse } from './osrm-schema';
+import { getProcessedRouteFromElements, getRouteElements } from './utils';
 import { fetchAccidents } from './accidents/fetchAccidents';
 import { Accident } from './accidents/types';
 import { accidentsQuerySchema } from './accidents/querySchema';
 import { Coords, RouteSegment } from './types';
+import { calculateOverallRouteSafety } from './roads-safety/utils';
 
 /**
  * Using a cached API response saved to a file, instead of hitting the real API.
@@ -40,6 +37,7 @@ interface RouteResult {
   coordinates: Coords[];
   processedRoute: RouteSegment[];
   dangerousIntersectionsCoordinates: Coords[];
+  safetyScore: number;
 }
 
 type ResultType = RouteResult[];
@@ -80,9 +78,10 @@ app.get('/route', async (c) => {
       [processedRoute[0].startGeo],
     );
 
-    const score = calculateOverallRouteSafety(
+    const safetyScore = calculateOverallRouteSafety(
       dangerousIntersectionsCoordinates,
       processedRoute,
+      route.legs[0].distance,
     );
     const routeSafety = 7;
     result.push({
@@ -91,6 +90,7 @@ app.get('/route', async (c) => {
       coordinates,
       processedRoute,
       dangerousIntersectionsCoordinates,
+      safetyScore,
     });
   }
 

@@ -7,11 +7,7 @@ import {
 } from './roads-safety/utils';
 import { getStreetSegmentQualityCategory } from './roads-quality/utils';
 
-export {
-  getRouteElements,
-  getProcessedRouteFromElements,
-  calculateOverallRouteSafety,
-};
+export { getRouteElements, getProcessedRouteFromElements };
 
 async function getRouteElements(
   nodeIds: number[],
@@ -108,29 +104,4 @@ function getProcessedRouteFromElements(
     processedRoute: processedRoute,
     dangerousIntersectionsCoordinates: dangerousIntersections,
   };
-}
-
-function calculateOverallRouteSafety(
-  dangerousIntersections: Coords[],
-  route: RouteSegment[],
-): number {
-  const weightedScores = route.map(
-    (segment) => mapRouteTypeToScore(segment.safety) * segment.weight,
-  );
-
-  const score = weightedScores.reduce((acc, curr) => acc + curr, 0);
-  return score;
-}
-
-function mapRouteTypeToScore(routeType: RouteSegmentType): number {
-  switch (routeType) {
-    case 'Designated':
-      return 1;
-    case 'Unknown':
-      return 0.5;
-    case 'Low speed':
-      return 0.3;
-    case 'High speed':
-      return 0;
-  }
 }

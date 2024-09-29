@@ -1,3 +1,4 @@
+import { distance } from '@turf/turf';
 import z from 'zod';
 
 const GeoJSONLineStringSchema = z.object({
@@ -307,6 +308,7 @@ export const RouteLeg = z.object({
   annotation: z.object({
     nodes: z.array(z.number()),
     weight: z.array(z.number()),
+    distance: z.number(),
   }),
 });
 
