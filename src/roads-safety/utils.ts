@@ -1,11 +1,6 @@
-import { distance } from '@turf/turf';
 import { Tags } from '../osrm-schema';
 import { Coords, RouteSegment } from '../types';
-import {
-  DANGEROUS_TYPES_OF_ROAD,
-  DANGEROUS_VELOCITY,
-  SAFE_TYPES_OF_ROAD,
-} from './config';
+import { DANGEROUS_TYPES_OF_ROAD, DANGEROUS_VELOCITY, SAFE_TYPES_OF_ROAD } from './config';
 
 export {
   checkIfIntersectingWithDangerousRoad,
@@ -64,7 +59,7 @@ function calculateOverallRouteSafety(
   );
 
   const dangerousIntersectionsPenalty = Math.ceil(
-    (dangerousIntersections.length / distance) * 1000 * 5,
+    (dangerousIntersections.length / distance) * 1000 * 4,
   );
 
   return (
@@ -78,10 +73,10 @@ function mapRouteTypeToScore(routeType: RouteSegmentType): number {
     case 'Designated':
       return 1;
     case 'Unknown':
-      return 0.5;
+      return 0.6;
     case 'Low speed':
-      return 0.3;
+      return 0.7;
     case 'High speed':
-      return 0;
+      return 0.1;
   }
 }
