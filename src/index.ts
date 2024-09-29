@@ -64,7 +64,7 @@ app.get('/route', async (c) => {
     });
   }
 
-  if(!data) return c.notFound();
+  if (!data) return c.notFound();
 
   const { routes } = data;
   for (const route of routes) {
@@ -125,15 +125,16 @@ app.get('/accidents', async (c) => {
 });
 
 app.get('/cluster-accidents', async (c) => {
-  const { coords, maxDistance,clusterDistance } = clusterAccidentsQuerySchema.parse({
-    coords: c.req.query('coords'),
-    maxDistance: c.req.query('maxDistance')
-      ? Number(c.req.query('maxDistance'))
-      : 200,
-    clusterDistance: c.req.query('clusterDistance')
-      ? Number(c.req.query('clusterDistance'))
-      : 200,
-  });
+  const { coords, maxDistance, clusterDistance } =
+    clusterAccidentsQuerySchema.parse({
+      coords: c.req.query('coords'),
+      maxDistance: c.req.query('maxDistance')
+        ? Number(c.req.query('maxDistance'))
+        : 200,
+      clusterDistance: c.req.query('clusterDistance')
+        ? Number(c.req.query('clusterDistance'))
+        : 200,
+    });
 
   const parsedCoords = coords.split(';').map((pair) => {
     const [lng, lat] = pair.split(',').map(Number); // Dzielimy każdą parę współrzędnych i konwertujemy je na liczby
@@ -146,11 +147,9 @@ app.get('/cluster-accidents', async (c) => {
     maxDistance: maxDistance,
   });
 
-
-
   const point = clusterAccidents(data, clusterDistance);
 
-  const movedPoint = moveClusterAccidentsToLine(point,parsedCoords)
+  const movedPoint = moveClusterAccidentsToLine(point, parsedCoords);
 
   return c.json(movedPoint);
 });

@@ -58,18 +58,17 @@ function calculateOverallRouteSafety(
   route: RouteSegment[],
   distance: number,
 ): number {
+  const weightsSum = route.reduce((acc, curr) => acc + curr.weight, 0);
   const weightedScores = route.map(
     (segment) => mapRouteTypeToScore(segment.safety) * segment.weight,
   );
 
-  const dangerousIntersectionsPenalty = Math.floor(
+  const dangerousIntersectionsPenalty = Math.ceil(
     (dangerousIntersections.length / distance) * 1000 * 5,
   );
 
-  console.log(dangerousIntersectionsPenalty);
-
   return (
-    weightedScores.reduce((acc, curr) => acc + curr, 0) -
+    (weightedScores.reduce((acc, curr) => acc + curr, 0) / weightsSum) * 100 -
     dangerousIntersectionsPenalty
   );
 }
