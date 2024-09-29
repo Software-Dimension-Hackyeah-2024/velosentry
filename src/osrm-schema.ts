@@ -308,7 +308,7 @@ export const RouteLeg = z.object({
   annotation: z.object({
     nodes: z.array(z.number()),
     weight: z.array(z.number()),
-    distance: z.number(),
+    distance: z.array(z.number()),
   }),
 });
 
