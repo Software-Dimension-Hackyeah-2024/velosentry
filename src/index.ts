@@ -13,7 +13,7 @@ import { Coords, RouteSegment } from './types';
 /**
  * Using a cached API response saved to a file, instead of hitting the real API.
  */
-const MOCK_OSRM_API = true;
+const MOCK_OSRM_API = false;
 
 const app = new Hono();
 
@@ -51,13 +51,23 @@ app.get('/route', async (c) => {
   if (MOCK_OSRM_API) {
     data = JSON.parse(await readFile('./osrm-response-02.json', 'utf-8'));
   } else {
+    const startCoords = c.req.query('startCoords')?.split(',').map(Number);
+    const endCoords = c.req.query('endCoords')?.split(',').map(Number);
+
+    if (
+      !startCoords ||
+      !endCoords ||
+      startCoords.length !== 2 ||
+      endCoords.length !== 2
+    ) {
+      return c.json(result);
+    }
     data = await fetchRoutes({
-      points: [
-        [19.937096, 50.061657],
-        [19.921474, 50.045345],
-      ],
+      points: [startCoords as [number, number], endCoords as [number, number]],
     });
+    console.log('TEST');
   }
+  console.log(data);
 
   const { routes } = data;
   for (const route of routes) {
@@ -81,6 +91,8 @@ app.get('/route', async (c) => {
       dangerousIntersectionsCoordinates,
     });
   }
+
+  console.log('RES', result);
 
   return c.json(result);
 });

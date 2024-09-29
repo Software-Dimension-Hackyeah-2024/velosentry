@@ -150,7 +150,7 @@ const StepManeuver = z.object({
   /** The clockwise angle from true north to the direction of travel immediately after the maneuver. Range 0-359. */
   bearing_after: z.number(),
   type: ManeuverType,
-  modifier: Modifier,
+  modifier: Modifier.optional(),
   /**
    * An optional integer indicating number of the exit to take. The property exists for the roundabout / rotary property:
    * Number of the roundabout exit to take. If exit is undefined the destination is on the roundabout.
@@ -257,7 +257,7 @@ const RouteStep = z.object({
   /** A string signifying the mode of transportation. */
   mode: z.string(),
   /** A StepManeuver object representing the maneuver */
-  maneuver: StepManeuver,
+  maneuver: StepManeuver.optional(),
   /** A list of Intersection objects that are passed along the segment, the very first belonging to the StepManeuver */
   intersections: z.array(Intersection),
   // rotary_name: The name for the rotary. Optionally included, if the step is a rotary and a rotary name is available.
