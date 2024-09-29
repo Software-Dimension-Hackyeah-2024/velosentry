@@ -9,6 +9,9 @@ import { fetchAccidents } from './accidents/fetchAccidents';
 import { Accident } from './accidents/types';
 import { accidentsQuerySchema } from './accidents/querySchema';
 import { Coords, RouteSegment } from './types';
+import { clusterAccidents } from './cluster-accidents/clusterAccidents';
+import { moveClusterAccidentsToLine } from './cluster-accidents/moveClusterAccidentsToLine';
+import { clusterAccidentsQuerySchema } from './cluster-accidents/querySchema';
 
 /**
  * Using a cached API response saved to a file, instead of hitting the real API.
@@ -107,6 +110,37 @@ app.get('/accidents', async (c) => {
   });
 
   return c.json(result);
+});
+
+app.get('/cluster-accidents', async (c) => {
+  const { coords, maxDistance,clusterDistance } = clusterAccidentsQuerySchema.parse({
+    coords: c.req.query('coords'),
+    maxDistance: c.req.query('maxDistance')
+      ? Number(c.req.query('maxDistance'))
+      : 200,
+    clusterDistance: c.req.query('clusterDistance')
+      ? Number(c.req.query('clusterDistance'))
+      : 200,
+  });
+
+  const parsedCoords = coords.split(';').map((pair) => {
+    const [lng, lat] = pair.split(',').map(Number); // Dzielimy każdą parę współrzędnych i konwertujemy je na liczby
+    return [lng, lat] as [number, number];
+  });
+  let data: Accident[];
+
+  data = await fetchAccidents({
+    points: parsedCoords,
+    maxDistance: maxDistance,
+  });
+
+
+
+  const point = clusterAccidents(data, clusterDistance);
+
+  const movedPoint = moveClusterAccidentsToLine(point,parsedCoords)
+
+  return c.json(movedPoint);
 });
 
 const port = 3000;
