@@ -3,7 +3,7 @@ import { cors } from 'hono/cors';
 import { serve } from '@hono/node-server';
 import { readFile } from 'node:fs/promises';
 import { fetchRoutes } from './osrm-api';
-import type { RouteElementsResponse, RouteResponse } from './osrm-schema';
+import type { RouteResponse } from './osrm-schema';
 import { getProcessedRouteFromElements, getRouteElements } from './utils';
 import { fetchAccidents } from './accidents/fetchAccidents';
 import { Accident } from './accidents/types';
@@ -45,7 +45,7 @@ app.get('/', async (c) => {
 });
 
 app.get('/route', async (c) => {
-  let data: RouteResponse;
+  let data: RouteResponse | undefined;
   let result: ResultType = [];
 
   if (MOCK_OSRM_API) {
@@ -53,11 +53,13 @@ app.get('/route', async (c) => {
   } else {
     data = await fetchRoutes({
       points: [
-        [19.937096, 50.061657],
-        [19.921474, 50.045345],
+        [19.939327239990234, 50.045785740106666],
+        [19.927225112915043, 50.06573443358677],
       ],
     });
   }
+
+  if(!data) return c.notFound();
 
   const { routes } = data;
   for (const route of routes) {

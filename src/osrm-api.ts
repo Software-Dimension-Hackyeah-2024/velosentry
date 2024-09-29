@@ -4,16 +4,23 @@ export type FetchRouteOptions = {
   points: [number, number][];
 };
 
-const ROUTE_API = 'http://router.project-osrm.org/route';
+const ROUTE_API = 'https://routing.openstreetmap.de/routed-bike/route';
 
 export async function fetchRoutes(options: FetchRouteOptions) {
   const { points } = options;
 
   const coordinatesStr = points.map(([lon, lat]) => `${lon},${lat}`).join(';');
 
-  const result = await fetch(
-    `${ROUTE_API}/v1/bike/${coordinatesStr}?overview=false&alternatives=true&steps=true&geometries=geojson&annotations=true`,
-  ).then((r) => r.json());
+  console.log(`${ROUTE_API}/v1/driving/${coordinatesStr}?overview=false&alternatives=true&steps=true&geometries=geojson&annotations=nodes`);
+  try {
+    const result = await fetch(
+      `${ROUTE_API}/v1/driving/${coordinatesStr}?overview=false&alternatives=true&steps=true&geometries=geojson&annotations=nodes`,
+    ).then((r) =>{ return r.json();});
+ 
+    return RouteResponse.parse(result);
 
-  return RouteResponse.parse(result);
+  }catch(e){
+    console.error(e)
+  }
+
 }
