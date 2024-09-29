@@ -13,11 +13,12 @@ import { calculateOverallRouteSafety } from './roads-safety/utils';
 import { clusterAccidents } from './cluster-accidents/clusterAccidents';
 import { moveClusterAccidentsToLine } from './cluster-accidents/moveClusterAccidentsToLine';
 import { clusterAccidentsQuerySchema } from './cluster-accidents/querySchema';
+import { routeQuerySchema } from './routeQuerySchema';
 
 /**
  * Using a cached API response saved to a file, instead of hitting the real API.
  */
-const MOCK_OSRM_API = true;
+const MOCK_OSRM_API = false;
 
 const app = new Hono();
 
@@ -49,7 +50,18 @@ app.get('/', async (c) => {
   return c.json({ message: 'Hello, cyclist!' });
 });
 
-app.get('/route', async (c) => {
+
+app.get('/safe-route', async (c) => {
+
+  const { coords } = routeQuerySchema.parse({
+    coords: c.req.query('coords'),
+  });
+
+  const parsedCoords = coords.split(';').map((pair) => {
+    const [lng, lat] = pair.split(',').map(Number); // Dzielimy każdą parę współrzędnych i konwertujemy je na liczby
+    return [lng, lat] as [number, number];
+  });
+
   let data: RouteResponse | undefined;
   let result: ResultType = [];
 
@@ -57,10 +69,7 @@ app.get('/route', async (c) => {
     data = JSON.parse(await readFile('./osrm-response-02.json', 'utf-8'));
   } else {
     data = await fetchRoutes({
-      points: [
-        [19.939327239990234, 50.045785740106666],
-        [19.927225112915043, 50.06573443358677],
-      ],
+      points: parsedCoords,
     });
   }
 
@@ -100,6 +109,32 @@ app.get('/route', async (c) => {
   }
 
   return c.json(result);
+});
+
+app.get('/route', async (c) => {
+  const { coords } = routeQuerySchema.parse({
+    coords: c.req.query('coords'),
+  });
+
+  const parsedCoords = coords.split(';').map((pair) => {
+    const [lng, lat] = pair.split(',').map(Number); // Dzielimy każdą parę współrzędnych i konwertujemy je na liczby
+    return [lng, lat] as [number, number];
+  });
+
+  let data: RouteResponse | undefined;
+
+  if (MOCK_OSRM_API) {
+    data = JSON.parse(await readFile('./osrm-response-02.json', 'utf-8'));
+  } else {
+    data = await fetchRoutes({
+      points: parsedCoords,
+    });
+  }
+
+  if (!data) return c.notFound();
+
+
+  return c.json(data);
 });
 
 app.get('/accidents', async (c) => {

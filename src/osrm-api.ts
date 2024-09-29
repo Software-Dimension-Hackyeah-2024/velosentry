@@ -14,7 +14,7 @@ export async function fetchRoutes(options: FetchRouteOptions) {
   console.log(`${ROUTE_API}/v1/driving/${coordinatesStr}?overview=false&alternatives=true&steps=true&geometries=geojson&annotations=nodes`);
   try {
     const result = await fetch(
-      `${ROUTE_API}/v1/driving/${coordinatesStr}?overview=false&alternatives=true&steps=true&geometries=geojson&annotations=nodes`,
+      `${ROUTE_API}/v1/driving/${coordinatesStr}?overview=false&alternatives=true&steps=true&geometries=geojson&annotations=true`,
     ).then((r) =>{ return r.json();});
  
     return RouteResponse.parse(result);
