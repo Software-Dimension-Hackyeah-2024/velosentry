@@ -1,6 +1,10 @@
-import { DANGEROUS_TYPES_OF_ROAD, DANGEROUS_VELOCITY } from './config';
-import { NodeProps, RouteElementsResponse, Tags, Nodes } from './osrm-schema';
+import { NodeProps, RouteElementsResponse, Nodes } from './osrm-schema';
 import { Coords, RouteSegment } from './types';
+import {
+  checkIfIntersectingWithDangerousRoad,
+  getStreetSegmentSafetyCategory,
+} from './roads-safety/utils';
+import { getStreetSegmentQualityCategory } from './roads-quality/utils';
 
 export { getRouteElements, getProcessedRouteFromElements };
 
@@ -73,6 +77,8 @@ function getProcessedRouteFromElements(
             longitude: nodesMap.get(nodeIds[i + 1])?.lon ?? 0,
           },
           tags: way.tags,
+          safety: getStreetSegmentSafetyCategory(way.tags),
+          quality: getStreetSegmentQualityCategory(way.tags),
         });
 
         if (
@@ -86,7 +92,6 @@ function getProcessedRouteFromElements(
             processedRoute[processedRoute.length - 1].startGeo,
           );
         }
-
         i++;
         break;
       }
@@ -96,26 +101,4 @@ function getProcessedRouteFromElements(
     processedRoute: processedRoute,
     dangerousIntersectionsCoordinates: dangerousIntersections,
   };
-}
-
-function checkIfIntersectingWithDangerousRoad(
-  firstSegment: RouteSegment,
-  secondSegment: RouteSegment,
-): boolean {
-  const isFirstSegmentDangerous = isStreetDangerous(firstSegment.tags);
-  const isSecondSegmentDangerous = isStreetDangerous(secondSegment.tags);
-
-  return (
-    isFirstSegmentDangerous !== isSecondSegmentDangerous &&
-    isSecondSegmentDangerous
-  );
-}
-function isStreetDangerous(tags?: Tags): boolean {
-  if (!tags) {
-    return false;
-  }
-  return (
-    DANGEROUS_TYPES_OF_ROAD.includes(tags.highway) ||
-    (!!tags.maxspeed && tags.maxspeed > DANGEROUS_VELOCITY)
-  );
 }

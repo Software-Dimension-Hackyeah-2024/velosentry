@@ -7,8 +7,11 @@ export type FetchRouteOptions = {
   maxDistance: number;
 };
 
-export async function fetchAccidents({points,maxDistance}:FetchRouteOptions) {
-  const apiResponse = await fetchAPIAccidents({points})
-  const accidents = transformAccidents(apiResponse)
-  return  filterByDistance(points,accidents,maxDistance);
+export async function fetchAccidents({
+  points,
+  maxDistance,
+}: FetchRouteOptions) {
+  const apiResponse = await fetchAPIAccidents({ points });
+  const accidents = transformAccidents(apiResponse);
+  return filterByDistance(points, accidents, maxDistance);
 }
