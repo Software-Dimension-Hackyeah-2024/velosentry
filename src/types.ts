@@ -9,6 +9,7 @@ type RouteSegment = {
   tags?: Tags;
   safety: RouteSegmentType;
   quality: RoadSmoothness;
+  weight: number;
 };
 
 type Coords = {

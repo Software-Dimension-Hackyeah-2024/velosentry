@@ -3,10 +3,15 @@ import { Coords, RouteSegment } from './types';
 import {
   checkIfIntersectingWithDangerousRoad,
   getStreetSegmentSafetyCategory,
+  RouteSegmentType,
 } from './roads-safety/utils';
 import { getStreetSegmentQualityCategory } from './roads-quality/utils';
 
-export { getRouteElements, getProcessedRouteFromElements };
+export {
+  getRouteElements,
+  getProcessedRouteFromElements,
+  calculateOverallRouteSafety,
+};
 
 async function getRouteElements(
   nodeIds: number[],
@@ -43,6 +48,7 @@ out body;
 function getProcessedRouteFromElements(
   elements: RouteElementsResponse['elements'],
   nodeIds: number[],
+  weights: number[],
 ): {
   processedRoute: RouteSegment[];
   dangerousIntersectionsCoordinates: Coords[];
@@ -79,6 +85,7 @@ function getProcessedRouteFromElements(
           tags: way.tags,
           safety: getStreetSegmentSafetyCategory(way.tags),
           quality: getStreetSegmentQualityCategory(way.tags),
+          weight: weights[i],
         });
 
         if (
@@ -101,4 +108,29 @@ function getProcessedRouteFromElements(
     processedRoute: processedRoute,
     dangerousIntersectionsCoordinates: dangerousIntersections,
   };
+}
+
+function calculateOverallRouteSafety(
+  dangerousIntersections: Coords[],
+  route: RouteSegment[],
+): number {
+  const weightedScores = route.map(
+    (segment) => mapRouteTypeToScore(segment.safety) * segment.weight,
+  );
+
+  const score = weightedScores.reduce((acc, curr) => acc + curr, 0);
+  return score;
+}
+
+function mapRouteTypeToScore(routeType: RouteSegmentType): number {
+  switch (routeType) {
+    case 'Designated':
+      return 1;
+    case 'Unknown':
+      return 0.5;
+    case 'Low speed':
+      return 0.3;
+    case 'High speed':
+      return 0;
+  }
 }

@@ -4,7 +4,11 @@ import { serve } from '@hono/node-server';
 import { readFile } from 'node:fs/promises';
 import { fetchRoutes } from './osrm-api';
 import type { RouteElementsResponse, RouteResponse } from './osrm-schema';
-import { getProcessedRouteFromElements, getRouteElements } from './utils';
+import {
+  calculateOverallRouteSafety,
+  getProcessedRouteFromElements,
+  getRouteElements,
+} from './utils';
 import { fetchAccidents } from './accidents/fetchAccidents';
 import { Accident } from './accidents/types';
 import { accidentsQuerySchema } from './accidents/querySchema';
@@ -65,13 +69,21 @@ app.get('/route', async (c) => {
     const elements = await getRouteElements(nodeIds);
 
     const { processedRoute, dangerousIntersectionsCoordinates } =
-      getProcessedRouteFromElements(elements, nodeIds);
+      getProcessedRouteFromElements(
+        elements,
+        nodeIds,
+        route.legs[0].annotation.weight,
+      );
 
     const coordinates = processedRoute.reduce(
       (acc, curr) => [...acc, curr.endGeo],
       [processedRoute[0].startGeo],
     );
 
+    const score = calculateOverallRouteSafety(
+      dangerousIntersectionsCoordinates,
+      processedRoute,
+    );
     const routeSafety = 7;
     result.push({
       route,
