@@ -9,6 +9,7 @@ import { fetchAccidents } from './accidents/fetchAccidents';
 import { Accident } from './accidents/types';
 import { accidentsQuerySchema } from './accidents/querySchema';
 import { Coords, RouteSegment } from './types';
+import { calculateOverallRouteSafety } from './roads-safety/utils';
 import { clusterAccidents } from './cluster-accidents/clusterAccidents';
 import { moveClusterAccidentsToLine } from './cluster-accidents/moveClusterAccidentsToLine';
 import { clusterAccidentsQuerySchema } from './cluster-accidents/querySchema';
@@ -39,6 +40,7 @@ interface RouteResult {
   coordinates: Coords[];
   processedRoute: RouteSegment[];
   dangerousIntersectionsCoordinates: Coords[];
+  safetyScore: number;
 }
 
 type ResultType = RouteResult[];
@@ -70,13 +72,22 @@ app.get('/route', async (c) => {
     const elements = await getRouteElements(nodeIds);
 
     const { processedRoute, dangerousIntersectionsCoordinates } =
-      getProcessedRouteFromElements(elements, nodeIds);
+      getProcessedRouteFromElements(
+        elements,
+        nodeIds,
+        route.legs[0].annotation.weight,
+      );
 
     const coordinates = processedRoute.reduce(
       (acc, curr) => [...acc, curr.endGeo],
       [processedRoute[0].startGeo],
     );
 
+    const safetyScore = calculateOverallRouteSafety(
+      dangerousIntersectionsCoordinates,
+      processedRoute,
+      route.legs[0].distance,
+    );
     const routeSafety = 7;
     result.push({
       route,
@@ -84,6 +95,7 @@ app.get('/route', async (c) => {
       coordinates,
       processedRoute,
       dangerousIntersectionsCoordinates,
+      safetyScore,
     });
   }
 

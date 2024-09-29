@@ -1,3 +1,4 @@
+import { distance } from '@turf/turf';
 import z from 'zod';
 
 const GeoJSONLineStringSchema = z.object({
@@ -115,12 +116,26 @@ const RoadLight = z.enum([
   'limited',
 ]);
 
+export type RoadSmoothness = z.infer<typeof RoadSmoothness>;
+export const RoadSmoothness = z.enum([
+  'excellent',
+  'good',
+  'intermediate',
+  'bad',
+  'very_bad',
+  'horrible',
+  'very_horrible',
+  'impassable',
+  'unknown',
+]);
+
 export type Tags = z.infer<typeof Tags>;
 export const Tags = z.object({
   highway: RoadType.optional(),
   maxspeed: z.number().optional(),
   surface: RoadSurface.optional(),
   lit: RoadLight.optional(),
+  smoothness: RoadSmoothness.optional(),
 });
 
 const Road = z.object({
@@ -292,6 +307,8 @@ export const RouteLeg = z.object({
    */
   annotation: z.object({
     nodes: z.array(z.number()),
+    weight: z.array(z.number()),
+    distance: z.number(),
   }),
 });
 

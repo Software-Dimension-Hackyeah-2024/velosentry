@@ -1,6 +1,5 @@
-import { Tags } from './osrm-schema';
-import { RoadSegmentQuality } from './roads-quality/utils';
-import { RoadSegmentSafety } from './roads-safety/utils';
+import { RoadSmoothness, Tags } from './osrm-schema';
+import { RouteSegmentType } from './roads-safety/utils';
 
 export type { RouteSegment, Coords };
 
@@ -8,8 +7,9 @@ type RouteSegment = {
   startGeo: Coords;
   endGeo: Coords;
   tags?: Tags;
-  safety: RoadSegmentSafety;
-  quality: RoadSegmentQuality;
+  safety: RouteSegmentType;
+  quality: RoadSmoothness;
+  weight: number;
 };
 
 type Coords = {
