@@ -3,6 +3,7 @@ import { Coords, RouteSegment } from './types';
 import {
   checkIfIntersectingWithDangerousRoad,
   getStreetSegmentSafetyCategory,
+  RouteSegmentType,
 } from './roads-safety/utils';
 import { getStreetSegmentQualityCategory } from './roads-quality/utils';
 
@@ -43,6 +44,7 @@ out body;
 function getProcessedRouteFromElements(
   elements: RouteElementsResponse['elements'],
   nodeIds: number[],
+  weights: number[],
 ): {
   processedRoute: RouteSegment[];
   dangerousIntersectionsCoordinates: Coords[];
@@ -79,6 +81,7 @@ function getProcessedRouteFromElements(
           tags: way.tags,
           safety: getStreetSegmentSafetyCategory(way.tags),
           quality: getStreetSegmentQualityCategory(way.tags),
+          weight: weights[i],
         });
 
         if (
